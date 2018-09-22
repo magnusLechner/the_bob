@@ -1,0 +1,6 @@
+[package]
+name = "the_bob"
+version = "0.1.0"
+authors = ["Magnus Lechner <mlechner111@gmail.com>"]
+
+[dependencies]
