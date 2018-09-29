@@ -9,5 +9,6 @@ fn main() {
 
     println!("{:?}", settings);
 
-    discord::send_get();
+    discord::run_get();
+    discord::run_post();
 }
