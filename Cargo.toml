@@ -5,3 +5,4 @@ authors = ["Magnus Lechner <mlechner111@gmail.com>"]
 
 [dependencies]
 config = "0.9"
+hyper = "0.12"

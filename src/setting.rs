@@ -1,4 +1,4 @@
-extern crate config;
+use config;
 
 #[derive(Debug)]
 pub struct Settings {
