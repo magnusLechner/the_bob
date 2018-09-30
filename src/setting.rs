@@ -2,9 +2,9 @@ use config;
 
 #[derive(Debug)]
 pub struct Settings {
-    client_id: String,
-    client_secret: String,
-    bot_token: String
+    pub client_id: String,
+    pub client_secret: String,
+    pub bot_token: String
 }
 
 pub fn read_settings_from_file(file: &str) -> Settings {
