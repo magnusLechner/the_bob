@@ -8,10 +8,10 @@ use hyper::rt::{self, Future, Stream};
 
 use self::gateway::Opcode::{self, OpcodeValue};
 
-const DISCORD_BASE_API_URL: &str = "https://discordapp.com/api/";
-const DISCORD_API_VERSION: &str = "v6/";
-
 pub fn authenticate_bot(token: String) {
+
+    //TODO siehe postman -> so muss der erste call aussehen
+    //TODO danach kann ich mich über die darin enthaltene URL mit meinem WebSocket verbinden
 
     let authentication = build_authentication(token);
     let discord_api_settings = build_discord_api_settings(5);

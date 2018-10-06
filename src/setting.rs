@@ -34,7 +34,7 @@ mod tests {
         let expected_client_secret = "test-client-secret";
         let expected_bot_token = "test-bot-token";
 
-        let test_file = "src/test/resources/test-credentials";
+        let test_file = "src/resources/test/test-credentials";
 
         // Act
         let settings = read_settings_from_file(test_file);
