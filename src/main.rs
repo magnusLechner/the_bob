@@ -12,4 +12,5 @@ fn main() {
     discord::run_get();
     discord::run_post();
 //    discord::run_authentication(settings.bot_token);
+    discord::authenticate_bot(settings.bot_token);
 }
