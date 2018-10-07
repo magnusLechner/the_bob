@@ -13,8 +13,8 @@ pub enum OpcodeValue {
     HeartbeatACK
 }
 
-pub fn get_opcode_value(opcode: OpcodeValue) -> u8 {
-    match gateway_opcode {
+pub fn get_opcode_value(opcode_value: OpcodeValue) -> u8 {
+    match opcode_value {
         OpcodeValue::Dispatch => 0,
         OpcodeValue::Heartbeat => 1,
         OpcodeValue::Identify => 2,

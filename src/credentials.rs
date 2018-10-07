@@ -1,13 +1,13 @@
 use config;
 
 #[derive(Debug)]
-pub struct Settings {
+pub struct Credentials {
     pub client_id: String,
     pub client_secret: String,
     pub bot_token: String
 }
 
-pub fn read_settings_from_file(file: &str) -> Settings {
+pub fn read_credentials_from_file(file: &str) -> Credentials {
     let mut settings_reader = config::Config::default();
     settings_reader.merge(config::File::with_name(file)).unwrap();
 
@@ -15,7 +15,7 @@ pub fn read_settings_from_file(file: &str) -> Settings {
     let client_secret = settings_reader.get_str("client_secret").unwrap();
     let bot_token = settings_reader.get_str("bot_token").unwrap();
 
-    Settings {
+    Credentials {
         client_id,
         client_secret,
         bot_token
@@ -26,7 +26,7 @@ pub fn read_settings_from_file(file: &str) -> Settings {
 mod tests {
 
     #[test]
-    fn read_settings_from_file() {
+    fn read_credentials_from_file() {
         use super::*;
 
         // Arrange
@@ -37,7 +37,7 @@ mod tests {
         let test_file = "src/resources/test/test-credentials";
 
         // Act
-        let settings = read_settings_from_file(test_file);
+        let settings = read_credentials_from_file(test_file);
 
         // Assert
         let client_id = settings.client_id.as_str();

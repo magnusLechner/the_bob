@@ -1,2 +1,2 @@
-pub mod Opcode;
-pub mod Payload;
+pub mod opcode;
+pub mod payload;
