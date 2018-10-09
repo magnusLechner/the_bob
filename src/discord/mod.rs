@@ -4,8 +4,10 @@ mod properties;
 use std::str;
 
 use hyper::{Client, Method, Request, Body};
-use hyper::header::HeaderValue;
+use hyper::header;
 use hyper::rt::{Future, Stream};
+
+use hyper_tls::HttpsConnector;
 
 use self::gateway::opcode::{self, OpcodeValue};
 
@@ -19,21 +21,23 @@ pub fn authenticate_bot(token: String) {
 pub fn get_gateway_information() -> impl Future<Item=(), Error=()> {
     let gateway_information_url = get_gateway_information_url();
 
-    let client = Client::new();
+    let https = HttpsConnector::new(4).unwrap();
+    let client = Client::builder()
+        .build::<_, hyper::Body>(https);
 
     let req = Request::get(gateway_information_url)
-        .header("Content-Type", "application/json")
-        .header("Authorization", "myToken")
-        .header("User-Agent", "TheBob/0.1")
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(header::AUTHORIZATION, "myToken")
+        .header(header::USER_AGENT, "TheBob/0.1")
         .body(Body::empty()).unwrap();
 
-    let get = client.request(req).and_then(|res| {
+    let response_stream = client.request(req).and_then(|res| {
         println!("POST RESPONSE STATUS: {}", res.status());
 
         res.into_body().concat2()
     });
 
-    get.map(|(get_chunk)| {
+    response_stream.map(|(get_chunk)| {
             println!("POST RESPONSE BODY: {:?}", str::from_utf8(&get_chunk).unwrap());
         })
         .map_err(|err| {
