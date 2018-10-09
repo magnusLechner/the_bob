@@ -8,12 +8,12 @@ pub struct Credentials {
 }
 
 pub fn read_credentials_from_file(file: &str) -> Credentials {
-    let mut settings_reader = config::Config::default();
-    settings_reader.merge(config::File::with_name(file)).unwrap();
+    let mut credentials = config::Config::default();
+    credentials.merge(config::File::with_name(file)).unwrap();
 
-    let client_id = settings_reader.get_str("client_id").unwrap();
-    let client_secret = settings_reader.get_str("client_secret").unwrap();
-    let bot_token = settings_reader.get_str("bot_token").unwrap();
+    let client_id = credentials.get_str("client_id").unwrap();
+    let client_secret = credentials.get_str("client_secret").unwrap();
+    let bot_token = credentials.get_str("bot_token").unwrap();
 
     Credentials {
         client_id,
@@ -37,12 +37,12 @@ mod tests {
         let test_file = "src/resources/test/test-credentials";
 
         // Act
-        let settings = read_credentials_from_file(test_file);
+        let credentials = read_credentials_from_file(test_file);
 
         // Assert
-        let client_id = settings.client_id.as_str();
-        let client_secret = settings.client_secret.as_str();
-        let bot_token = settings.bot_token.as_str();
+        let client_id = credentials.client_id.as_str();
+        let client_secret = credentials.client_secret.as_str();
+        let bot_token = credentials.bot_token.as_str();
 
         assert_eq!(expected_client_id, client_id);
         assert_eq!(expected_client_secret, client_secret);

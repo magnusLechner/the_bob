@@ -2,8 +2,8 @@ use config::{self, Config};
 
 #[derive(Debug)]
 pub struct DiscordProperties {
-    header: Config,
-    api: Config
+    pub header: Config,
+    pub api: Config
 }
 
 impl DiscordProperties {
@@ -18,7 +18,7 @@ impl DiscordProperties {
     }
 }
 
-pub fn read_discord_properties(header_file: &str, api_file: &str) -> DiscordProperties {
+pub fn load_discord_properties(header_file: &str, api_file: &str) -> DiscordProperties {
     let header_config = read_config(header_file);
     let api_config = read_config(api_file);
 
