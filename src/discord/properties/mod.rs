@@ -2,8 +2,8 @@ use config::{self, Config};
 
 #[derive(Debug)]
 pub struct DiscordProperties {
-    pub header: Config,
-    pub api: Config
+    header: Config,
+    api: Config
 }
 
 impl DiscordProperties {

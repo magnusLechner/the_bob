@@ -1,26 +1,18 @@
 extern crate the_bob;
+extern crate hyper;
 
 use the_bob::credentials;
 use the_bob::discord;
 
-// TODO: remove
-extern crate hyper;
 use hyper::rt;
-
-//TODO remove
-use the_bob::hyper_example;
 
 fn main() {
 
     //TODO move this to discord::properties?
     let credentials = credentials::read_credentials_from_file("credentials");
+    let bot_token = credentials.bot_token;
 
-//    println!("{:?}", credentials);
-
-//    hyper_example::run_get();
-//    hyper_example::run_post();
-
-//    discord::authenticate_bot(credentials.bot_token);
-
-    rt::run(discord::get_gateway_information());
+    rt::run(
+        discord::get_gateway_information(bot_token)
+    );
 }

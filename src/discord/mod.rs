@@ -3,13 +3,15 @@ mod properties;
 
 use std::str;
 
-use hyper::{Client, Method, Request, Body};
-use hyper::header;
+use hyper::{header, Client, Method, Request, Body};
 use hyper::rt::{Future, Stream};
 
 use hyper_tls::HttpsConnector;
 
+use serde_json::{self, Value, Error};
+
 use self::gateway::opcode::{self, OpcodeValue};
+use self::properties::DiscordProperties;
 
 pub fn authenticate_bot(token: String) {
 
@@ -18,17 +20,18 @@ pub fn authenticate_bot(token: String) {
     println!("opcode: {:?}", opcode::get_opcode_value(opcode));
 }
 
-pub fn get_gateway_information() -> impl Future<Item=(), Error=()> {
-    let gateway_information_url = get_gateway_information_url();
+pub fn get_gateway_information(bot_token: String) -> impl Future<Item=(), Error=()> {
+    let discord_properties = get_discord_properties();
+    let gateway_information_url = get_gateway_information_url(&discord_properties);
 
     let https = HttpsConnector::new(4).unwrap();
     let client = Client::builder()
         .build::<_, hyper::Body>(https);
 
     let req = Request::get(gateway_information_url)
-        .header(header::CONTENT_TYPE, "application/json")
-        .header(header::AUTHORIZATION, "myToken")
-        .header(header::USER_AGENT, "TheBob/0.1")
+        .header(header::CONTENT_TYPE, discord_properties.get_header_value("content_type"))
+        .header(header::AUTHORIZATION, bot_token)
+        .header(header::USER_AGENT, discord_properties.get_header_value("user_agent"))
         .body(Body::empty()).unwrap();
 
     let response_stream = client.request(req).and_then(|res| {
@@ -38,22 +41,43 @@ pub fn get_gateway_information() -> impl Future<Item=(), Error=()> {
     });
 
     response_stream.map(|(get_chunk)| {
-            println!("POST RESPONSE BODY: {:?}", str::from_utf8(&get_chunk).unwrap());
-        })
-        .map_err(|err| {
-            println!("Error: {}", err);
-        })
+        let response_as_str = str::from_utf8(&get_chunk).unwrap();
+        println!("POST RESPONSE BODY: {:?}", response_as_str);
+
+        let gateway_information: GatewayInformation = serde_json::from_str(response_as_str).unwrap();
+        println!("GATEWAY RESPONSE: {}", gateway_information.url);
+        println!("GATEWAY RESPONSE: {}", gateway_information.session_start_limit.reset_after);
+    })
+    .map_err(|err| {
+        println!("Error: {}", err);
+    })
 }
 
-fn get_gateway_information_url() -> String {
+fn get_discord_properties() -> DiscordProperties {
     let discord_header_location = "src/resources/discord_header";
     let discord_api_location = "src/resources/discord_api";
-    let discord_properties = properties::load_discord_properties(discord_header_location, discord_api_location);
+    properties::load_discord_properties(discord_header_location, discord_api_location)
+}
 
-    let base_url = discord_properties.api.get_str("discord_api_base_url").unwrap();
-    let api_version = discord_properties.api.get_str("discord_api_version").unwrap();
-    let resource = discord_properties.api.get_str("discord_api_gateway_bot").unwrap();
+fn get_gateway_information_url(discord_properties: &DiscordProperties) -> String {
+    let base_url = discord_properties.get_api_value("discord_api_base_url");
+    let api_version = discord_properties.get_api_value("discord_api_version");
+    let resource = discord_properties.get_api_value("discord_api_gateway_bot");
 
     let gateway_information = base_url + &api_version + &resource;
     gateway_information
+}
+
+#[derive(Serialize, Deserialize)]
+struct GatewayInformation {
+    url: String,
+    shards: u8,
+    session_start_limit: SessionStartLimit
+}
+
+#[derive(Serialize, Deserialize)]
+struct SessionStartLimit {
+    total: i32,
+    remaining: i32,
+    reset_after: i64
 }
