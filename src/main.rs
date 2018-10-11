@@ -13,6 +13,6 @@ fn main() {
     let bot_token = credentials.bot_token;
 
     rt::run(
-        discord::get_gateway_information(bot_token)
+        discord::get_gateway_information(&bot_token)
     );
 }

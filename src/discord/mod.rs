@@ -20,7 +20,10 @@ pub fn authenticate_bot(token: String) {
     println!("opcode: {:?}", opcode::get_opcode_value(opcode));
 }
 
-pub fn get_gateway_information(bot_token: String) -> impl Future<Item=(), Error=()> {
+
+//TODO request wrapper drum rum und die Header auslagern mit einer Methode,
+//TODO welche ein Request entgegennimmt und dann alle Header autoamtische setzt
+pub fn get_gateway_information(bot_token: &String) -> impl Future<Item=(), Error=()> {
     let discord_properties = get_discord_properties();
     let gateway_information_url = get_gateway_information_url(&discord_properties);
 
@@ -30,7 +33,7 @@ pub fn get_gateway_information(bot_token: String) -> impl Future<Item=(), Error=
 
     let req = Request::get(gateway_information_url)
         .header(header::CONTENT_TYPE, discord_properties.get_header_value("content_type"))
-        .header(header::AUTHORIZATION, bot_token)
+        .header(header::AUTHORIZATION, "Bot ".to_owned() + &bot_token)
         .header(header::USER_AGENT, discord_properties.get_header_value("user_agent"))
         .body(Body::empty()).unwrap();
 
@@ -47,10 +50,16 @@ pub fn get_gateway_information(bot_token: String) -> impl Future<Item=(), Error=
         let gateway_information: GatewayInformation = serde_json::from_str(response_as_str).unwrap();
         println!("GATEWAY RESPONSE: {}", gateway_information.url);
         println!("GATEWAY RESPONSE: {}", gateway_information.session_start_limit.reset_after);
+
+        gateway_url = gateway_information.url;
+
     })
     .map_err(|err| {
         println!("Error: {}", err);
     })
+
+
+    //TODO websocket aufbauen
 }
 
 fn get_discord_properties() -> DiscordProperties {
