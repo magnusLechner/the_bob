@@ -2,8 +2,8 @@ use config::{self, Config};
 
 #[derive(Debug)]
 pub struct DiscordProperties {
-    header: Config,
-    api: Config
+    pub header: Config,
+    pub api: Config
 }
 
 impl DiscordProperties {
@@ -18,19 +18,24 @@ impl DiscordProperties {
     }
 }
 
-pub fn load_discord_properties(header_file: &str, api_file: &str) -> DiscordProperties {
-    let header_config = read_config(header_file);
-    let api_config = read_config(api_file);
+pub fn load() -> DiscordProperties {
+    let discord_header_location = "src/resources/discord_header";
+    let discord_api_location = "src/resources/discord_api";
+    load_property_files(discord_header_location, discord_api_location)
+}
+
+fn load_property_files(header_file: &str, api_file: &str) -> DiscordProperties {
+    let header = read_config(header_file);
+    let api = read_config(api_file);
 
     DiscordProperties {
-        header: header_config,
-        api: api_config
+        header,
+        api
     }
 }
 
 fn read_config(file: &str) -> Config {
     let mut config = config::Config::default();
     config.merge(config::File::with_name(file)).unwrap();
-
     config
 }

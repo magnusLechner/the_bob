@@ -3,7 +3,8 @@ mod properties;
 
 use std::str;
 
-use hyper::{header, Client, Method, Request, Body};
+use hyper::{header, Client, Request, Body};
+use hyper::client::HttpConnector;
 use hyper::rt::{Future, Stream};
 
 use hyper_tls::HttpsConnector;
@@ -13,19 +14,48 @@ use serde_json::{self, Value, Error};
 use self::gateway::opcode::{self, OpcodeValue};
 use self::properties::DiscordProperties;
 
-pub fn authenticate_bot(token: String) {
-
-    let opcode = OpcodeValue::Identify;
-
-    println!("opcode: {:?}", opcode::get_opcode_value(opcode));
+pub struct Discord {
+    bot_token: String,
+    client: hyper::Client<HttpsConnector<HttpConnector>, Body>,
+    properties: DiscordProperties
 }
 
+impl Discord {
+    pub fn new(bot_token: &str) -> Self {
+        let token = bot_token.to_string();
 
-//TODO request wrapper drum rum und die Header auslagern mit einer Methode,
-//TODO welche ein Request entgegennimmt und dann alle Header autoamtische setzt
+        let https = HttpsConnector::new(4).unwrap();
+        let client = Client::builder()
+            .build::<_, hyper::Body>(https);
+
+        let properties = properties::load();
+
+        Discord {
+            bot_token: token,
+            client,
+            properties
+        }
+    }
+
+    pub fn connect(&self) {
+        let gateway_information = Self::get_gateway_information(&self);
+        Self::build_up_websocket_connection(&self, gateway_information);
+    }
+
+    fn get_gateway_information(&self) -> GatewayInformation {
+        let gateway_information_url = build_gateway_information_uri(&self.properties);
+        //TODO make initial call to discord api and get uri to build websocket
+    }
+
+    fn build_up_websocket_connection(&self, gateway_information: GatewayInformation) {
+        //TODO create and use websocket
+    }
+}
+
+//TODO remove -> see methods above
 pub fn get_gateway_information(bot_token: &String) -> impl Future<Item=(), Error=()> {
-    let discord_properties = get_discord_properties();
-    let gateway_information_url = get_gateway_information_url(&discord_properties);
+    let discord_properties = properties::load();
+    let gateway_information_url = build_gateway_information_uri(&discord_properties);
 
     let https = HttpsConnector::new(4).unwrap();
     let client = Client::builder()
@@ -43,32 +73,22 @@ pub fn get_gateway_information(bot_token: &String) -> impl Future<Item=(), Error
         res.into_body().concat2()
     });
 
-    response_stream.map(|(get_chunk)| {
+    response_stream.map(|get_chunk| {
         let response_as_str = str::from_utf8(&get_chunk).unwrap();
         println!("POST RESPONSE BODY: {:?}", response_as_str);
 
         let gateway_information: GatewayInformation = serde_json::from_str(response_as_str).unwrap();
         println!("GATEWAY RESPONSE: {}", gateway_information.url);
         println!("GATEWAY RESPONSE: {}", gateway_information.session_start_limit.reset_after);
-
-        gateway_url = gateway_information.url;
-
     })
     .map_err(|err| {
         println!("Error: {}", err);
     })
 
-
     //TODO websocket aufbauen
 }
 
-fn get_discord_properties() -> DiscordProperties {
-    let discord_header_location = "src/resources/discord_header";
-    let discord_api_location = "src/resources/discord_api";
-    properties::load_discord_properties(discord_header_location, discord_api_location)
-}
-
-fn get_gateway_information_url(discord_properties: &DiscordProperties) -> String {
+fn build_gateway_information_uri(discord_properties: &DiscordProperties) -> String {
     let base_url = discord_properties.get_api_value("discord_api_base_url");
     let api_version = discord_properties.get_api_value("discord_api_version");
     let resource = discord_properties.get_api_value("discord_api_gateway_bot");
