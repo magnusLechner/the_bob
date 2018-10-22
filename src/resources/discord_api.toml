@@ -1,3 +1,0 @@
-discord_api_base_url = "https://discordapp.com/api"
-discord_api_version = "/v6"
-discord_api_gateway_bot = "/gateway/bot"
