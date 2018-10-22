@@ -35,7 +35,7 @@ impl Discord {
             res.into_body().concat2()
         });
 
-        let future = response_stream.map(|get_chunk| {
+        let future = response_stream.map(|get_chunk| -> String {
             let response_as_str = str::from_utf8(&get_chunk).unwrap();
             println!("POST RESPONSE BODY: {:?}", response_as_str);
 
@@ -43,7 +43,7 @@ impl Discord {
 //            println!("GATEWAY RESPONSE: {}", gateway_information.url);
 //            println!("GATEWAY RESPONSE: {}", gateway_information.session_start_limit.reset_after);
 
-            Ok(response_as_str)
+            response_as_str.to_string()
         })
         .map_err(|err| {
             println!("Error: {}", err);
