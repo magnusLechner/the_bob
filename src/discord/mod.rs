@@ -1,14 +1,18 @@
+mod gateway;
+
 use std::str;
 
 use tokio;
 
 use hyper::{header, Client, Request, Body};
 use hyper::client::HttpConnector;
-use hyper::rt::{self, Future, Stream};
+use hyper::rt::{Future, Stream};
 
 use hyper_tls::HttpsConnector;
 
-use serde_json::{self, Value, Error};
+use serde_json;
+
+use self::gateway::{Opcode, Payload};
 
 pub struct Discord {
     bot_token: String
@@ -22,38 +26,43 @@ impl Discord {
     }
 
     pub fn connect(&self) {
-        Self::ask_for_websocket_information(self);
+        Self::setup_websocket_connection(self);
     }
 
-    fn ask_for_websocket_information(&self) {
+    fn setup_websocket_connection(&self) {
+        let websocket_connection_properties = Self::get_websocket_connection_properties(self);
+        Self::establish_connection(websocket_connection_properties);
+    }
+
+    //TODO establish connection
+    fn establish_connection(websocket_connection_properties: WebsocketConnectionProperties) {
+        let connection_url = websocket_connection_properties.get_explicit_websocket_url();
+
+    }
+
+    fn get_websocket_connection_properties(&self) -> WebsocketConnectionProperties {
         let client = Self::get_client();
         let req = Self::build_request(self);
 
         let response_stream = client.request(req).and_then(|res| {
-            println!("POST RESPONSE STATUS: {}", res.status());
-
             res.into_body().concat2()
         });
 
-        let future = response_stream.map(|get_chunk| -> String {
+        let future = response_stream.map(|get_chunk| -> WebsocketConnectionProperties {
             let response_as_str = str::from_utf8(&get_chunk).unwrap();
-            println!("POST RESPONSE BODY: {:?}", response_as_str);
-
-//            let gateway_information: WebsocketConnectionProperties = serde_json::from_str(response_as_str).unwrap();
-//            println!("GATEWAY RESPONSE: {}", gateway_information.url);
-//            println!("GATEWAY RESPONSE: {}", gateway_information.session_start_limit.reset_after);
-
-            response_as_str.to_string()
+            let websocket_connection_properties: WebsocketConnectionProperties = serde_json::from_str(response_as_str).unwrap();
+            websocket_connection_properties
         })
         .map_err(|err| {
             println!("Error: {}", err);
         });
 
-
         let mut rt = tokio::runtime::Runtime::new().unwrap();
-        let response_body = rt.block_on(future).unwrap();
+        let websocket_connection_properties: WebsocketConnectionProperties = rt.block_on(future).unwrap();
 
-        println!("RESULT: {:?}", response_body);
+        println!("RESULT: {:?}", websocket_connection_properties);
+
+        websocket_connection_properties
     }
 
     fn get_client() -> Client<HttpsConnector<HttpConnector>, Body> {
@@ -69,5 +78,24 @@ impl Discord {
             .header(header::USER_AGENT, "TheBob/0.1")
             .body(Body::empty()).unwrap()
     }
+}
 
+#[derive(Debug, Serialize, Deserialize)]
+struct WebsocketConnectionProperties {
+    url: String,
+    shards: i32,
+    session_start_limit: SessionStartLimit
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct SessionStartLimit {
+    total: i32,
+    remaining: i32,
+    reset_after: i32
+}
+
+impl WebsocketConnectionProperties {
+    pub fn get_explicit_websocket_url(&self) -> String {
+        self.url.clone() + "?v=6&encoding=json"
+    }
 }
